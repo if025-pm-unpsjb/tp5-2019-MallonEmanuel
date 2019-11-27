@@ -12,8 +12,18 @@ struct sTaskParams{
 	int t;
 };
 
-sTaskParams taskParams[3] =  { { 0, 2, 4, 4 }, { 1, 1, 5, 5 },
-		{ 2, 1, 6, 6 } };
+const int SYSTEMS_COUNT = 3;
+// Seleccione el indice del sistema. En este caso se toma el primer sistema
+const int SYSTEM_SELETED = 0;
+// Tamaño de cada uno de los sistemas. @TODO Se puede mejorar armando una struct
+int systems_size[SYSTEMS_COUNT] = {3,3,5};
+// Sistemas
+sTaskParams taskParams[SYSTEMS_COUNT][10] = {
+								 {{1,2,4,4}, {2,1,5,5},{3,1,6,6}}
+								,{{1,3,5,5}, {2,1,7,7},{3,2,10,10}}
+								,{{1,2,5,5}, {2,1,6,6},{3,1,7,7},{4,2,10,10},{5,1,15,15}}
+								} ;
+
 
 
 void thread1 (void*);
@@ -23,59 +33,20 @@ void thread1 (void*);
  */
 int main(){
 
-	// Initializes the trace recorder, but does not start the tracing.
+	// Initializes the trace recorder, but does not start the tracing.	vTraceEnable( TRC_INIT );
 	vTraceEnable( TRC_INIT );
-/*	struct sTaskParams taskParams[4];
-	taskParams[0].id = 0;
-	taskParams[0].c = 2;
-	taskParams[0].d = 4;
-	taskParams[0].t = 4;
 
-	taskParams[1].id = 1;
-	taskParams[1].c = 1;
-	taskParams[1].d = 5;
-	taskParams[1].t = 5;
-
-	taskParams[2].id = 2;
-	taskParams[2].c = 1;
-	taskParams[2].d = 6;
-	taskParams[2].t = 6;
-*/
-	int limit = 2;
-
-	for (int i = 0; i <= limit ; i++){
+	for (int i = 0; i <= systems_size[SYSTEM_SELETED] -1; i++){
 		char name[10] = "";
-		sprintf(name,"T%d",i);
+		sprintf(name,"T%d",taskParams[SYSTEM_SELETED][i].id);
 		xTaskCreate(thread1 					// Function that implements the task.
 					,name						// Text name for the task.
 					,256						// Stack size in words, not bytes.
-					,(void*) &taskParams[i]		// Parameter passed into the task.
+					,(void*) &taskParams[SYSTEM_SELETED][i]		// Parameter passed into the task.
 					,configMAX_PRIORITIES - (i+1)	// Priority at which the task is created.
 					,NULL);						// Used to pass out the created task's handle.
 	}
 
-/*
-	xTaskCreate(thread1 					// Function that implements the task.
-					,"Tarea_A"						// Text name for the task.
-					,256						// Stack size in words, not bytes.
-					,(void*) &taskParams[0]		// Parameter passed into the task.
-					,configMAX_PRIORITIES -2	// Priority at which the task is created.
-					,NULL);						// Used to pass out the created task's handle.
-
-	xTaskCreate(thread1 					// Function that implements the task.
-						,"Tarea_I"						// Text name for the task.
-						,256						// Stack size in words, not bytes.
-						,(void*) &taskParams[1]		// Parameter passed into the task.
-						,configMAX_PRIORITIES -3	// Priority at which the task is created.
-						,NULL);						// Used to pass out the created task's handle.
-
-	xTaskCreate(thread1 					// Function that implements the task.
-							,"TAREA_Z"						// Text name for the task.
-							,256						// Stack size in words, not bytes.
-							,(void*) &taskParams[2]		// Parameter passed into the task.
-							,configMAX_PRIORITIES -4 	// Priority at which the task is created.
-							,NULL);						// Used to pass out the created task's handle.
-*/
 	// Starts the tracing.
 	vTraceEnable( TRC_START );
 	pc.printf("Iniciando simulación\n\r");
@@ -85,28 +56,57 @@ int main(){
     for( ;; );
 }
 
-void eat_cpu(uint32_t time){
-	float res = 0;
-	for(uint32_t i = 0;i <= time ; i++){
-		for(uint32_t j; j <= 500 ; j++){
-			res = j * (j+1) * 100 + (100 *10 * 2);
-			res = j * (j+1) * 100 + (100 *10 * 2);
+
+void eat_cpu(int v,TickType_t ticks){
+  TickType_t cnt = 0;
+  TickType_t prev = xTaskGetTickCount();
+  while (true) {
+    if (prev < xTaskGetTickCount()) {
+    	// se intenta prevenir los errores de salto.
+		if (xTaskGetTickCount() - prev < 100) {
+			cnt++;
 		}
-	}
+     	prev = xTaskGetTickCount();
+    }
+    if (cnt > ticks) {
+      break;
+    }
+  }
 }
 
+char* get_state(int before, int after, int deadTime){
+	if(after - before > deadTime){
+		return "VENCIDA";
+	}
+	return "OK";
+}
 void thread1 (void* params){
     // Casteo de la estructura que contiene los parametros
     struct sTaskParams* taskParams;
     taskParams = (struct sTaskParams *) params;
 
     // Definicion de variables locales
-    const portTickType time   	  =  taskParams->c * 1000;
+    const portTickType xExecTime  =  taskParams->c * 1000;
     const portTickType xFrequency =  taskParams->t * 1000;
+    const portTickType xDeadTime  =  taskParams->d * 1000;
     portTickType xLastWakeTime = 0;
-
+    int32_t instance = 1;
     while(1){
-    	pc.printf("Ejecutando tarea %d durante %d\n\r",taskParams->id,taskParams->c);
+    	int before = xTaskGetTickCount();
+    	eat_cpu(before,xExecTime);
+    	int after = xTaskGetTickCount();
+    	pc.printf("Tarea %d [%d , %d, %d]  => %s\n\r"
+    			,taskParams->id
+    			,before
+				,after
+				,instance
+				,get_state(before,after,(taskParams->d * 1000))
+				);
+    	instance = instance + 1;
+    	if(instance == 5){
+    		// Se agrega un breackpoint para que el sistema para en la instancia
+    		// 5 de la primer tarea
+    	}
 	    vTaskDelayUntil( &xLastWakeTime, xFrequency );
     }
 }
