@@ -2,6 +2,7 @@
 #include "mbed.h"       // Librería mbed
 #include "FreeRTOS.h"   // Definiciones principales de FreeRTOS
 #include "task.h"       // Funciones para el control de las tareas
+#include "semphr.h"
 
 Serial pc(USBTX, USBRX); // tx, rx
 
@@ -10,39 +11,29 @@ struct sTaskParams{
 	int c;
 	int d;
 	int t;
+	int wait;
 };
 
-const int SYSTEMS_COUNT = 3;
-// Seleccione el indice del sistema. En este caso se toma el primer sistema
-const int SYSTEM_SELETED = 2;
-// Tamaño de cada uno de los sistemas. @TODO Se puede mejorar armando una struct
-int systems_size[SYSTEMS_COUNT] = {3,3,5};
-// Sistemas
-sTaskParams taskParams[SYSTEMS_COUNT][10] = {
-								 {{1,2,4,4}, {2,1,5,5},{3,1,6,6}}
-								,{{1,3,5,5}, {2,1,7,7},{3,2,10,10}}
-								,{{1,2,5,5}, {2,1,6,6},{3,1,7,7},{4,2,10,10},{5,1,15,15}}
-								} ;
+// Sistema
+sTaskParams taskParams[] = {{1,1,4,4,3000}, {2,1,5,5,3000},{3,3,10,10,5000}};
+int system_size = 3;
 
-
+SemaphoreHandle_t xSemaphore = 0;
 
 void thread1 (void*);
-/* Implementar los siguientes conjuntos de tareas con FreeRTOS, bajo la polıtica
- * de planificacion (RM), y generar trazas de su ejecucion mediante Tracealyzer:
- * ejercicio 1. S(3) = {(2, 4, 4),(1, 5, 5),(1, 6, 6)}
- */
+
 int main(){
 
 	// Initializes the trace recorder, but does not start the tracing.	vTraceEnable( TRC_INIT );
 	vTraceEnable( TRC_INIT );
-
-	for (int i = 0; i <= systems_size[SYSTEM_SELETED] -1; i++){
+	xSemaphore = xSemaphoreCreateMutex();
+	for (int i = 0; i < system_size; i++){
 		char name[10] = "";
-		sprintf(name,"T%d",taskParams[SYSTEM_SELETED][i].id);
+		sprintf(name,"T%d",taskParams[i].id);
 		xTaskCreate(thread1 					// Function that implements the task.
 					,name						// Text name for the task.
 					,256						// Stack size in words, not bytes.
-					,(void*) &taskParams[SYSTEM_SELETED][i]		// Parameter passed into the task.
+					,(void*) &taskParams[i]		// Parameter passed into the task.
 					,configMAX_PRIORITIES - (i+1)	// Priority at which the task is created.
 					,NULL);						// Used to pass out the created task's handle.
 	}
@@ -84,19 +75,16 @@ void thread1 (void* params){
     const portTickType xFrequency =  taskParams->t * 1000;
     const portTickType xDeadTime  =  taskParams->d * 1000;
     portTickType xLastWakeTime = 0;
-    int32_t instance = 0;
+    int32_t instance = 1;
     while(1){
-    	int before = xTaskGetTickCount();
-    	eat_cpu(xExecTime);
-    	int after = xTaskGetTickCount();
-    	pc.printf("Tarea %d [%d , %d, %d] %d => %s\n\r"
-    			,taskParams->id
-    			,before
-				,after
-				,instance
-				,(after - (instance * xFrequency))
-				,get_state((instance * xFrequency),after,(taskParams->d * 1000))
-				);
+        if(xSemaphoreTake(xSemaphore, taskParams->wait-50) == pdTRUE){
+        	pc.printf("Tarea %d[%d] tomo el recurso. %d\n\r",taskParams->id,instance,xTaskGetTickCount());
+        	eat_cpu(xExecTime);
+        	pc.printf("Tarea %d[%d] solto el recurso. %d\n\r",taskParams->id,instance,xTaskGetTickCount());
+        	xSemaphoreGive(xSemaphore);
+        }else{
+        	pc.printf("Tarea %d[%d] no puedo tomar el recurso. %d\n\r",taskParams->id,instance,xTaskGetTickCount());
+        }
     	instance = instance + 1;
  	    vTaskDelayUntil( &xLastWakeTime, xFrequency );
     }
