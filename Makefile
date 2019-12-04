@@ -8,7 +8,7 @@ PROJ = tp5
 #
 # source code
 #
-SRC += ./main2.cpp
+SRC += ./main3_3.cpp
 SRC += ./util.cpp
 FREERTOS_SRC += $(wildcard ./freertos/*.c)
 FREERTOS_SRC += ./freertos/portable/MemMang/heap_1.c
@@ -66,10 +66,10 @@ LINKER_SCRIPT = ./mbed/TARGET_LPC1768/TOOLCHAIN_GCC_ARM/LPC1768.ld
 #
 # flags and symbols required by the compiler
 #
-CPU += -mcpu=cortex-m3 
+CPU += -mcpu=cortex-m3
 CPU += -mthumb
 
-C_FLAGS += $(CPU) 
+C_FLAGS += $(CPU)
 C_FLAGS += -c
 C_FLAGS += -g
 C_FLAGS += -fno-common
@@ -116,7 +116,7 @@ else
   CC_FLAGS += -DNDEBUG -Os
 endif
 
-############################################################################### 
+###############################################################################
 #
 # compiler executables paths
 #
@@ -137,14 +137,14 @@ all: $(BUILD_DIR)/$(PROJ).bin size
 clean:
 	+@echo "Cleaning files..."
 	@rm -f $(BUILD_DIR)/$(PROJ).bin $(BUILD_DIR)/$(PROJ).elf $(OBJECTS) $(FREERTOS_OBJECTS) $(TRACEALYZER_OBJECTS) $(DEPS)
-	
+
 .c.o:
 	+@echo "Compile: $<"
 	@$(CC) $(C_FLAGS) $(CC_SYMBOLS) -std=gnu99  $(INCLUDE_PATHS) -o $@ $<
 
 .cpp.o:
 	+@echo "Compile: $<"
-	@$(CPP) $(CC_FLAGS) -fno-rtti $(CC_SYMBOLS) -std=gnu++98 $(INCLUDE_PATHS) -o $@ $<	
+	@$(CPP) $(CC_FLAGS) -fno-rtti $(CC_SYMBOLS) -std=gnu++98 $(INCLUDE_PATHS) -o $@ $<
 
 $(BUILD_DIR)/$(PROJ).elf: $(OBJECTS) $(FREERTOS_OBJECTS) $(TRACEALYZER_OBJECTS) $(SYS_OBJECTS)
 	+@echo "Linking: $@"
@@ -153,7 +153,7 @@ $(BUILD_DIR)/$(PROJ).elf: $(OBJECTS) $(FREERTOS_OBJECTS) $(TRACEALYZER_OBJECTS) 
 $(BUILD_DIR)/$(PROJ).bin: $(BUILD_DIR)/$(PROJ).elf
 	+@echo "Binary: $@"
 	@$(OBJCOPY) -O binary $< $@
-	
+
 size: $(BUILD_DIR)/$(PROJ).elf
 	$(SIZE) $<
 

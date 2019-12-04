@@ -1,7 +1,16 @@
+
+# Informe Trabajo Práctico
+
+Recuerde ver la carpeta "adjuntos" para encontrar los binarios que tienen las trazas, estos también se encuentra en formato png. O bien seguir el siguiente link para ver el informe resumido.
+
+https://docs.google.com/document/d/1Hjh9qhR2L4sFnZnrX_5hwPbpdFyTxdbrFc46n2FhvlA/edit?usp=sharing
+
 # mbed-blinky-makefile
 Programa de prueba base para la placa mbed LPC1768, con FreeRTOS. El proyecto esta basado en Make, y utiliza el [mbed SDK](https://developer.mbed.org/users/mbed_official/code/mbed/) (mbed OS 2).
 
 A continuación como se describe como importarlo en Eclipse y ejecutarlo en la placa.
+
+
 
 ---
 
@@ -16,12 +25,12 @@ Clonar el proyecto usando Git:
 
 ## Importar el proyecto en Eclipse
 Una vez clonado localmente, agregar el proyecto en Eclipse:
-* Seleccionar **[File > New > Makefile Project with Existing Code]**. 
+* Seleccionar **[File > New > Makefile Project with Existing Code]**.
 * En la nueva ventana:
     * En **[Existing Code Location]** indicar el *path* al proyecto (usar el botón **[Browse...]**).
     * En **[Toolchain for Indexer]** seleccionar la opción *ARM Cross GCC* (¡importante!).
 
-El proyecto debe aparecer ahora en la vista *Project Explorer*: 
+El proyecto debe aparecer ahora en la vista *Project Explorer*:
 * Hacer clic derecho sobre el mismo, y seleccionar **[Properties]** en el menú contextual.
 * En la nueva ventana, en la sección izquierda, seleccionar **[C/C++ Build > Settings]**. En la sección derecha de la ventana, hacer clic en la pestaña **[Toolchains]**. Verificar que el campo *Name* indique *GNU MCU Eclipse ARM Embedded GCC (arm-none-eabi-gcc)* o bien *GNU Tools for ARM Embedded Processors*.
 * Hacer clic en **[Apply and Close]**.
@@ -58,13 +67,10 @@ A continuación se creará y ejecutará una configuración de *debug*:
     * En la pestaña **[Debugger]**, el campo *Executable* debe contener el valor `${pyocd_path}\${pyocd_executable}`. Estas dos variables son reemplazadas por los valores especificados el menú **[MCU > PyOCD]**.
     * En la pestaña **[Common]**, seleccionar la opción **[Shared file:]**, indicando en el campo el nombre del proyecto. De esta manera la configuración para debugging es guardada en un archivo `*.launch` dentro del proyecto.
     * Hacer clic en el botón **[Apply]**. No cerrar la ventana aún.
-    
+
 Para ejecutar el programa por primera vez, conectar la placa si no lo estuviera aún y, hacer clic en el botón **[Debug]**, que esta en la parte inferior de la ventana. Es posible que Eclipse pregunte si se desea cambiar a la perspectiva *Debug*, responder que sí.
 
 ---
-    
+
 ## Próximas ejecuciones
 Para cargar el programa en la placa y ejecutarlo, la opción más sencilla es hacer clic ícono **[Debug]** en la barra de herramientas de Eclipse, que ejecuta el último perfil seleccionado. Si se desea cambiar el perfil, hacer clic en la flecha que se encuentra junto al ícono **[Debug]**, y de la lista desplegable que se presenta, seleccionar el proyecto, o bien hacer clic en **[Debug Configurations...]**, que abre la ventana de configuración del punto anterior.
-
-
-
